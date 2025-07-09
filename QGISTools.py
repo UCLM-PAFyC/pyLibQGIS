@@ -27,6 +27,16 @@ class QGISTools(object):
     is_initialized = False
 
     @classmethod
+    def get_raster_layers(self):
+        str_error = ''
+        layers_by_name = {}
+        for layer in QgsProject.instance().mapLayers().values():
+            layer_name = layer.name()
+            if isinstance(layer, QgsRasterLayer):
+                layers_by_name[layer_name] = layer
+        return str_error, layers_by_name
+
+    @classmethod
     def get_vector_layers(self, layer_geometry_ogr_wkb_type):
         str_error = ''
         layers_by_name = {}
@@ -51,8 +61,6 @@ class QGISTools(object):
                 #         break
                 # if geometry_is_valid:
                 #     layers_by_name[layer_name] = layer
-            if isinstance(layer, QgsRasterLayer):
-                yo = 1
         return str_error, layers_by_name
 
     @classmethod
