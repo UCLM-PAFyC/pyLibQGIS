@@ -56,5 +56,11 @@ class QGISTools(object):
         return str_error, layers_by_name
 
     @classmethod
+    def get_vector_layer_field_names(self, layer):
+        str_error = ''
+        field_names = layer.fields().names()
+        return str_error, field_names
+
+    @classmethod
     def initialize(self, iface):
         is_initalized = True
