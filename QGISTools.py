@@ -27,6 +27,36 @@ class QGISTools(object):
     is_initialized = False
 
     @classmethod
+    def get_file_path(self, layer_name):
+        str_error = ''
+        file_path = -1
+        layers = QgsProject.instance().mapLayersByName(layer_name)
+        if layers:
+            layer = layers[0]
+            file_path = layer.dataProvider().dataSourceUri()
+        else:
+            str_error = ('Not exists layer: {}'.format(layer_name))
+            return str_error, file_path
+        return str_error, file_path
+
+    @classmethod
+    def get_raster_band_count(self, layer_name):
+        str_error = ''
+        raster_count = -1
+        layers = QgsProject.instance().mapLayersByName(layer_name)
+        if layers:
+            layer = layers[0]
+            if isinstance(layer, QgsRasterLayer):
+                raster_count = layer.bandCount()
+            else:
+                str_error = ('Not is a raster layer: {}'.format(layer_name))
+                return str_error, raster_count
+        else:
+            str_error = ('Not exists raster layer: {}'.format(layer_name))
+            return str_error, raster_count
+        return str_error, raster_count
+
+    @classmethod
     def get_raster_layers(self):
         str_error = ''
         layers_by_name = {}
