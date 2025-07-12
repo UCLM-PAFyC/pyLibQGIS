@@ -8,7 +8,7 @@ current_path = os.path.dirname(__file__)
 sys.path.append(os.path.join(current_path, '..'))
 
 from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
-                       QgsCoordinateReferenceSystem, QgsCoordinateTransform)
+                       QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProviderRegistry)
 from qgis.core import (QgsProject, QgsVectorLayer, QgsRasterLayer, QgsSymbol, QgsRendererCategory,
                        QgsCategorizedSymbolRenderer, QgsWkbTypes)
 from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry
@@ -27,13 +27,34 @@ class QGISTools(object):
     is_initialized = False
 
     @classmethod
-    def get_file_path(self, layer_name):
+    def get_layer_name(self, layer_name):
         str_error = ''
-        file_path = -1
+        uri_layer_name = ''
         layers = QgsProject.instance().mapLayersByName(layer_name)
         if layers:
             layer = layers[0]
-            file_path = layer.dataProvider().dataSourceUri()
+            uri_components = QgsProviderRegistry.instance().decodeUri(layer.dataProvider().name(),
+                                                                      layer.publicSource())
+            if 'layerName' in uri_components:
+                uri_layer_name = uri_components['layerName'] # no for raster wfs?, ...
+            # file_path = layer.dataProvider().dataSourceUri()
+        else:
+            str_error = ('Not exists layer: {}'.format(layer_name))
+            return str_error, uri_layer_name
+        return str_error, uri_layer_name
+
+    @classmethod
+    def get_file_path(self, layer_name):
+        str_error = ''
+        file_path = ''
+        layers = QgsProject.instance().mapLayersByName(layer_name)
+        if layers:
+            layer = layers[0]
+            uri_components = QgsProviderRegistry.instance().decodeUri(layer.dataProvider().name(),
+                                                                      layer.publicSource())
+            if 'path' in uri_components: # no for raster wms, ...
+                file_path = uri_components['path']
+            # file_path = layer.dataProvider().dataSourceUri()
         else:
             str_error = ('Not exists layer: {}'.format(layer_name))
             return str_error, file_path
@@ -63,7 +84,10 @@ class QGISTools(object):
         for layer in QgsProject.instance().mapLayers().values():
             layer_name = layer.name()
             if isinstance(layer, QgsRasterLayer):
-                layers_by_name[layer_name] = layer
+                uri_components = QgsProviderRegistry.instance().decodeUri(layer.dataProvider().name(),
+                                                                          layer.publicSource())
+                if 'path' in uri_components:  # no for raster wms, ...
+                    layers_by_name[layer_name] = layer
         return str_error, layers_by_name
 
     @classmethod
@@ -79,7 +103,10 @@ class QGISTools(object):
             if isinstance(layer, QgsVectorLayer):
                 layer_geometry_qgs_wkb_type = layer.wkbType()
                 if layer_geometry_qgs_wkb_type in layer_geometry_ogr_wkb_type:
-                    layers_by_name[layer_name] = layer
+                    uri_components = QgsProviderRegistry.instance().decodeUri(layer.dataProvider().name(),
+                                                                              layer.publicSource())
+                    if 'layerName' in uri_components: # not for wfs?, ...
+                        layers_by_name[layer_name] = layer
                 # layer_geometry_qgs_wkb_type_ = layer.geometryType()
                 # layer_geometry_qgs_string = QgsWkbTypes.displayString(layer_geometry_qgs_wkb_type).lower()
                 # geometry_is_valid = False
