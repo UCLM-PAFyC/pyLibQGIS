@@ -4,7 +4,7 @@
 import os, sys
 from osgeo import gdal, osr, ogr
 
-current_path = os.path.dirname(__file__)
+current_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(current_path, '..'))
 
 from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
