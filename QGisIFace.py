@@ -2,6 +2,8 @@
 # David Hernandez Lopez, david.hernandez@uclm.es
 
 import sys, os
+from pathlib import Path
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(current_path, '..'))
 # sys.path.append(os.path.join(current_path, '../..'))
@@ -19,11 +21,12 @@ sys.path.append(os.path.join(current_path, '..'))
 from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
                        QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.core import QgsProject, QgsVectorLayer, QgsSymbol, QgsRendererCategory, QgsCategorizedSymbolRenderer
-from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry
+from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry, QgsMapLayer
 from qgis import utils
 from qgis.core import Qgis
 
 from pyLibProject.defs import defs_project_definition
+from pyLibQGIS import defs_qgis
 
 class QGisIFace:
     def __init__(self, iface, plugin_path):
@@ -31,25 +34,23 @@ class QGisIFace:
         self.plugin_path = plugin_path
         self.project = None
         self.project_crs = None
+        self.layerTreeProjectName = ''
+        qgis_bin_path = Path(QgsApplication.prefixPath())
+        self.qgis_prefix_path = os.path.realpath(str(qgis_bin_path.parent.parent))
+        self.osge4w_bat_path = os.path.normpath(self.qgis_prefix_path + defs_qgis.OSGEO4W_BAT_SUFFIX_WINDOWS)
+        self.osge4w_bin_path = os.path.normpath(self.qgis_prefix_path + defs_qgis.OSGEO4W_BIN_SUFFIX_WINDOWS)
+        self.qgis_bin_path = os.path.normpath(self.qgis_prefix_path + defs_qgis.QGIS_BIN_SUFFIX_WINDOWS)
+        self.qgis_plugins_path = os.path.normpath(self.qgis_prefix_path + defs_qgis.QGIS_PLUGINS_SUFFIX_WINDOWS)
+        self.qgis_python_path = os.path.normpath(self.qgis_prefix_path + defs_qgis.QIGS_PYTHON_PATH_SUFFIX_WINDOWS)
 
     def close_project(self):
         if not self.project:
             return
-        # if not self.layerTreeProjectName:
-        #     self.project = None
-        #     return
-        # root = QgsProject.instance().layerTreeRoot()
-        # if self.layerTreeProjectName:
-        #     self.removeGroup(root, self.layerTreeProjectName)
-        #     self.layerTreeProjectName = None
-        #     self.layerTreeMeasurements = None
-        #     self.layerTreeLSAs = None
-        #     self.project = None
-        #     self.layerNetworkPoints= None
-        #     self.layerNetworkMeasurementsByTypeBySession.clear()
-        #     self.layerLSAsMeasurements.clear()
-        #     self.layerLSAsPositions.clear()
-        #     self.layerTreeLsaById.clear()
+        if self.layerTreeProjectName is not None:
+            root = QgsProject.instance().layerTreeRoot()
+            self.remove_group(root, self.layerTreeProjectName)
+        self.layerTreeProjectName = None
+        self.iface.mapCanvas().refresh()
 
     def get_map_canvas_wkb_geometry_in_project_crs(self):
         str_error = ''
@@ -69,61 +70,43 @@ class QGisIFace:
         wkb = geometry.asWkb()
         return str_error, wkb
 
-    def load_project(self):
+    def load_project(self, layers_group_prefix = None):
+        str_error = ''
+        if self.project is None:
+            str_error = 'No project defined'
+            return str_error
+        if not defs_project_definition.PROJECT_DEFINITIONS_TAG_TAG in self.project.project_definition:
+            str_error =('Not exists {} in project definition'.format(defs_project_definition.PROJECT_DEFINITIONS_TAG))
+            return str_error
+        if not defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS in self.project.project_definition:
+            str_error =('Not exists {} in project definition'.format(
+                defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS))
+            return str_error
+        project_tag = self.project.project_definition[defs_project_definition.PROJECT_DEFINITIONS_TAG_TAG]
+        project_crs = self.project.project_definition[defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS]
+        layerTreeProjectName = ''
+        if not layers_group_prefix is None:
+            layerTreeProjectName = layers_group_prefix + '_' + project_tag
+        else:
+            layerTreeProjectName = project_tag
         root = QgsProject.instance().layerTreeRoot()
-        # project_tag = self.project.project_definition[gd.PROJECT_DEFINITIONS_TAG_TAG]
-        # project_crs = self.project.project_definition[gd.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS]
-        # if not project_tag or not project_crs:
-        #     return
-        # group_name = qgd.CONST_LAYER_TREE_PROJECT_NAME
-        # self.layerTreeProjectName = group_name + '_' + project_tag
-        # # self.layerTreeProject = root.addGroup(self.layerTreeProjectName)
-        # self.layerTreeProject = root.insertGroup(0, self.layerTreeProjectName)
-        # qgisProjectCrsAsEpsg = QgsProject.instance().crs().authid()
-        # if qgisProjectCrsAsEpsg != project_crs:
-        #     QgsProject.instance().setCrs(QgsCoordinateReferenceSystem(project_crs))
-        # if len(self.project.points) == 0:
-        #     return
-        # self.layerNetworkPoints = None
-        # self.layerNetworkPoints = QgsVectorLayer("Point?crs=" + project_crs,
-        #                                          qgd.CONST_LAYER_NETWORK_POINTS_NAME, "memory")
-        # layerNetworkPointsProvider = self.layerNetworkPoints.dataProvider()
-        # for field_name in qgd.layer_network_points_attributes:
-        #     layerNetworkPointsProvider.addAttributes([QgsField(field_name,
-        #                                      qgd.layer_network_points_attributes[field_name])])
-        # nop = 0
-        # self.layerNetworkPoints.startEditing()
-        # points_geometry = {}
-        # for point_id in self.project.points:
-        #     position = self.project.points[point_id].get_position_for_qgis()
-        #     if not position:
-        #         continue
-        #     feature = QgsFeature()
-        #     feature.setFields(layerNetworkPointsProvider.fields())
-        #     fc = position.coordinates[cd.X_PROJECTION_LABEL]
-        #     sc = position.coordinates[cd.Y_PROJECTION_LABEL]
-        #     position_type = position.type
-        #     geom = QgsPoint(fc, sc)
-        #     feature.setGeometry(QgsGeometry.fromPoint(geom))
-        #     feature.setAttribute("id", point_id)
-        #     feature.setAttribute("type", position_type)
-        #     self.layerNetworkPoints.addFeature(feature)
-        #     nop = nop + 1
-        #     enabled = True
-        #     points_geometry[point_id] = geom
-        #     # enabled = position.enabled_by_position_type[position_type]
-        # self.layerNetworkPoints.commitChanges()
-        # self.layerNetworkPoints.loadNamedStyle(self.qml_network_points)
-        # QgsProject.instance().addMapLayer(self.layerNetworkPoints, False)
-        # self.layerTreeProject.addLayer(self.layerNetworkPoints)
-        # self.layerNetworkPoints.updateExtents()
-        # self.iface.mapCanvas().setExtent(self.layerNetworkPoints.extent())
+        # if exists previous load
+        layerTreeProject = root.findGroup(layerTreeProjectName)
+        if layerTreeProject is not None:
+            self.remove_group(root, layerTreeProject)
+            layerTreeProject = None
+        self.layerTreeProjectName = layerTreeProjectName
+        layerTreeProject = root.insertGroup(0, self.layerTreeProjectName)
+        qgisProjectCrsAsEpsg = QgsProject.instance().crs().authid()
+        if qgisProjectCrsAsEpsg != project_crs:
+            QgsProject.instance().setCrs(QgsCoordinateReferenceSystem(project_crs))
+        return str_error
 
     def open_project(self,
                      project):
         self.close_project()
         self.project = project
-        self.load_project()
+        # self.load_project()
 
     def reload_all_layers(self):
         str_error = ''
@@ -151,6 +134,31 @@ class QGisIFace:
         self.iface.mapCanvas().refresh()
         return str_error
 
+    def remove_group(self, root, name):
+        # root = QgsProject.instance().layerTreeRoot()
+        group = root.findGroup(name)
+        if not group is None:
+            for child in group.children():
+                dump = child.dump()
+                id = dump.split("=")[-1].strip()
+                QgsProject.instance().removeMapLayer(id)
+            root.removeChildNode(group)
+        return
+
+    def set_layer_removable(self, layer_name, is_removable=False):
+        layers = QgsProject.instance().mapLayersByName(layer_name)
+        if layers:
+            if len(layers) == 1:
+                layer = layers[0]
+                flags = layer.flags()
+                if is_removable:
+                    flags |= QgsMapLayer.LayerFlag(QgsMapLayer.Removable)
+                else:
+                    flags = flags & ~QgsMapLayer.LayerFlag(QgsMapLayer.Removable)
+                layer.setFlags(QgsMapLayer.LayerFlag(flags))
+        return
+
     def set_project(self,
                     project):
         self.project = project
+
