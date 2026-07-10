@@ -70,6 +70,9 @@ class QGisIFace:
         wkb = geometry.asWkb()
         return str_error, wkb
 
+    def get_qgis_prefix_path(self):
+        return self.qgis_prefix_path
+
     def load_project(self, layers_group_prefix = None):
         str_error = ''
         if self.project is None:
