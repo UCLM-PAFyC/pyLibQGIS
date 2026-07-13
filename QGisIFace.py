@@ -21,7 +21,7 @@ sys.path.append(os.path.join(current_path, '..'))
 from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
                        QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.core import QgsProject, QgsVectorLayer, QgsSymbol, QgsRendererCategory, QgsCategorizedSymbolRenderer
-from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry, QgsMapLayer
+from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry, QgsMapLayer, QgsRectangle, QgsLayerTreeLayer
 from qgis import utils
 from qgis.core import Qgis
 
@@ -165,3 +165,19 @@ class QGisIFace:
                     project):
         self.project = project
 
+    def zoom_to_project(self):
+        if self.project is None:
+            return
+        if not self.layerTreeProjectName:
+            return
+        root = QgsProject.instance().layerTreeRoot()
+        layerTreeProject = root.findGroup(self.layerTreeProjectName)
+        if layerTreeProject is None:
+            return
+        extent = QgsRectangle()
+        extent.setMinimal()
+        for child in layerTreeProject.children():
+            if isinstance(child, QgsLayerTreeLayer):
+                extent.combineExtentWith(child.layer().extent())
+        self.iface.mapCanvas().setExtent(extent)
+        self.iface.mapCanvas().refresh()
