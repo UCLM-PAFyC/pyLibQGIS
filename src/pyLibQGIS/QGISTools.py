@@ -2,25 +2,9 @@
 # David Hernandez Lopez, david.hernandez@uclm.es
 
 import os, sys
-from osgeo import gdal, osr, ogr
 
-current_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_path, '..'))
-
-from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
-                       QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProviderRegistry)
-from qgis.core import (QgsProject, QgsVectorLayer, QgsRasterLayer, QgsSymbol, QgsRendererCategory,
-                       QgsCategorizedSymbolRenderer, QgsWkbTypes)
-from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry
-from qgis import utils
-from qgis.core import Qgis
-
-from . import defs_qgis
-
-from pyLibCRSs import CRSsDefines as defs_crs
-from pyLibCRSs.CRSsTools import CRSsTools
-from pyLibGDAL import defs_gdal
-from pyLibGDAL.GDALTools import GDALTools
+from qgis.core import (QgsProviderRegistry)
+from qgis.core import (QgsProject, QgsVectorLayer, QgsRasterLayer)
 
 
 class QGISTools(object):

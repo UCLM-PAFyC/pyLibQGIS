@@ -4,11 +4,6 @@
 import sys, os
 from pathlib import Path
 
-current_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_path, '..'))
-# sys.path.append(os.path.join(current_path, '../..'))
-# sys.path.insert(0, '..')
-
 # from VolumeTimeSeries.lib.Project import Project
 # from VolumeTimeSeries.defs import defs_project
 # from VolumeTimeSeries.defs import defs_main
