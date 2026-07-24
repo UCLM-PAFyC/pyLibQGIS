@@ -1,11 +1,8 @@
 # authors:
 # David Hernandez Lopez, david.hernandez@uclm.es
 
-import os, sys
-
 from qgis.core import (QgsProviderRegistry)
 from qgis.core import (QgsProject, QgsVectorLayer, QgsRasterLayer)
-
 
 class QGISTools(object):
     is_initialized = False

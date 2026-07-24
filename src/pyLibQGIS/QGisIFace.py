@@ -1,24 +1,13 @@
 # authors:
 # David Hernandez Lopez, david.hernandez@uclm.es
 
-import sys, os
+import os
 from pathlib import Path
-
-# from VolumeTimeSeries.lib.Project import Project
-# from VolumeTimeSeries.defs import defs_project
-# from VolumeTimeSeries.defs import defs_main
-# from lib import gui_defines as gd
-# from lib import qgis_gui_defines as qgd
-# from pyCRSs import CRSsDefines as cd
-# import json
-# import Tools
 
 from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
                        QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.core import QgsProject, QgsVectorLayer, QgsSymbol, QgsRendererCategory, QgsCategorizedSymbolRenderer
 from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry, QgsMapLayer, QgsRectangle, QgsLayerTreeLayer
-from qgis import utils
-from qgis.core import Qgis
 
 from pyLibProject.defs import defs_project_definition
 from pyLibQGIS import defs_qgis
