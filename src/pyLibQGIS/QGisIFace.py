@@ -9,7 +9,6 @@ from qgis.core import (QgsApplication, QgsDataSourceUri, QgsProject,
 from qgis.core import QgsProject, QgsVectorLayer, QgsSymbol, QgsRendererCategory, QgsCategorizedSymbolRenderer
 from qgis.core import QgsField, QgsFeature, QgsPoint, QgsGeometry, QgsMapLayer, QgsRectangle, QgsLayerTreeLayer
 
-from pyLibProject.defs import defs_project_definition
 from pyLibQGIS import defs_qgis
 
 class QGisIFace:
@@ -34,18 +33,15 @@ class QGisIFace:
             root = QgsProject.instance().layerTreeRoot()
             self.remove_group(root, self.layerTreeProjectName)
         self.layerTreeProjectName = None
+        self.project_crs = None
         self.iface.mapCanvas().refresh()
 
     def get_map_canvas_wkb_geometry_in_project_crs(self):
         str_error = ''
         if not self.project_crs:
-            str_project_crs_epsg_code = self.project.project_definition[
-                defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS]
-            epsg_code = -1
-            try:
-                epsg_code = int(str_project_crs_epsg_code.replace(defs_project_definition.EPSG_STRING_PREFIX, ''))
-            except ValueError:
-                str_error = ('Invalid integer value from: {}'.format(str_project_crs_epsg_code))
+            str_error, epsg_code = self.project.get_project_definition_projected_crs_epsg_code()
+            if str_error:
+                return str_error, wkb
             self.project_crs = QgsCoordinateReferenceSystem(epsg_code)
         geometry = QgsGeometry.fromRect(self.iface.mapCanvas().extent())
         qgis_project_crs = QgsProject.instance().crs()
@@ -62,15 +58,12 @@ class QGisIFace:
         if self.project is None:
             str_error = 'No project defined'
             return str_error
-        if not defs_project_definition.PROJECT_DEFINITIONS_TAG_TAG in self.project.project_definition:
-            str_error =('Not exists {} in project definition'.format(defs_project_definition.PROJECT_DEFINITIONS_TAG))
+        str_error, project_tag = self.project.get_project_definition_tag()
+        if str_error:
             return str_error
-        if not defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS in self.project.project_definition:
-            str_error =('Not exists {} in project definition'.format(
-                defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS))
+        str_error, project_crs = self.project.get_project_definition_projected_crs()
+        if str_error:
             return str_error
-        project_tag = self.project.project_definition[defs_project_definition.PROJECT_DEFINITIONS_TAG_TAG]
-        project_crs = self.project.project_definition[defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS]
         layerTreeProjectName = ''
         if not layers_group_prefix is None:
             layerTreeProjectName = layers_group_prefix + '_' + project_tag
@@ -104,13 +97,9 @@ class QGisIFace:
                                                         wkb_geometry):
         str_error = ''
         if not self.project_crs:
-            str_project_crs_epsg_code = self.project.project_definition[
-                defs_project_definition.PROJECT_DEFINITIONS_TAG_PROJECTED_CRS]
-            epsg_code = -1
-            try:
-                epsg_code = int(str_project_crs_epsg_code.replace(defs_project_definition.EPSG_STRING_PREFIX, ''))
-            except ValueError:
-                str_error = ('Invalid integer value from: {}'.format(str_project_crs_epsg_code))
+            str_error, epsg_code = self.project.get_project_definition_projected_crs_epsg_code()
+            if str_error:
+                return str_error, wkb
             self.project_crs = QgsCoordinateReferenceSystem(epsg_code)
         geometry = QgsGeometry()
         geometry.fromWkb(wkb_geometry)
